@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <b>🏆 AI14 Hackathon Winner · Government Technology Track</b>
+  <b>🏆 Hackathon Winner · Government Technology Track</b>
 </p>
 
 <p align="center">
