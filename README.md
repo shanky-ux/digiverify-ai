@@ -1,330 +1,425 @@
-# DigiVerify AI
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f0c29,50:302b63,100:24243e&height=220&section=header&text=DigiVerify%20AI&fontSize=52&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Stop%20Social%20Security%20Funds%20to%20Deceased%20Beneficiaries&descSize=18&descAlignY=58&descColor=ccccff"/>
+</p>
 
-**Stop Social Security Funds to Deceased Beneficiaries** · AI14 Hackathon Winner 🏆
+<p align="center">
+  <b>🏆 AI14 Hackathon Winner · Government Technology Track</b>
+</p>
 
-An AI-powered welfare fraud detection platform that cross-references death registries, runs ML anomaly detection, and stops payments to deceased beneficiaries — all in real time.
-
-> "Even saving 1% of welfare fraud means crores of rupees that can feed millions of children."
-
----
-
-## The Problem
-
-India disburses **₹3.47 lakh crore** annually across schemes like PM-KISAN, NSAP, and MGNREGS. A conservative 1–2% leakage from deceased beneficiaries means **₹3,470–6,940 crore lost every year** — not from corruption, but from disconnected systems.
-
-| Root Cause | Impact |
-|---|---|
-| No real-time death registry integration | Payments continue months after death |
-| Manual, paper-based life certificates | Easy to forge, slow to process |
-| No anomaly detection on transactions | Post-death ATM withdrawals go unnoticed |
-| Reactive audits only | Fraud caught after disbursement — recovery nearly impossible |
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
+  <img src="https://img.shields.io/badge/FastAPI-Backend-009688?style=for-the-badge&logo=fastapi&logoColor=white"/>
+  <img src="https://img.shields.io/badge/React-18+-61DAFB?style=for-the-badge&logo=react&logoColor=black"/>
+  <img src="https://img.shields.io/badge/Scikit--Learn-ML-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Streamlit-Analytics-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Accuracy-94.5%25-brightgreen?style=for-the-badge"/>
+</p>
 
 ---
 
-## System Architecture
+## 📌 Overview
 
-```
-                        ┌──────────────────────────────────────────────┐
-                        │               DATA SOURCES                   │
-                        │                                              │
-                        │  ┌──────────┐  ┌────────┐  ┌───────────┐   │
-                        │  │  Death   │  │ UIDAI  │  │   Bank    │   │
-                        │  │ Registry │  │Aadhaar │  │  Records  │   │
-                        │  │  (CRS)   │  │  API   │  │  (NPCI)   │   │
-                        │  └────┬─────┘  └───┬────┘  └─────┬─────┘   │
-                        └───────┼────────────┼─────────────┼──────────┘
-                                │            │             │
-                                ▼            ▼             ▼
-                        ┌──────────────────────────────────────────────┐
-                        │            ETL + INGESTION LAYER             │
-                        │     Pandas pipeline → SQLite → Redis cache   │
-                        └──────────────────────┬───────────────────────┘
-                                               │
-                                               ▼
-                        ┌──────────────────────────────────────────────┐
-                        │               ML ENGINE                      │
-                        │                                              │
-                        │   Feature Engineering  →  GBC Model          │
-                        │       (9 signals)          (94.5% acc)       │
-                        │                             │                │
-                        │          ┌──────────────────┼──────────────┐ │
-                        │          ▼                  ▼              ▼ │
-                        │      HIGH RISK          MEDIUM RISK     CLEAR │
-                        │      score ≥ 0.7       score 0.4–0.7  score < 0.4 │
-                        └──────────────────────┬───────────────────────┘
-                                               │
-                                               ▼
-                        ┌──────────────────────────────────────────────┐
-                        │             FastAPI BACKEND (:5000)          │
-                        │                                              │
-                        │  /verify/beneficiary  /verify/bulk           │
-                        │  /death-record/check  /aadhaar/verify        │
-                        │  /life-certificate    /dashboard/*           │
-                        └───────────────┬──────────────────┬───────────┘
-                                        │                  │
-                              ┌─────────▼──────┐  ┌───────▼──────────┐
-                              │ React Dashboard│  │Streamlit Analytics│
-                              │     :5173      │  │      :8501        │
-                              └────────────────┘  └──────────────────┘
-```
+**DigiVerify AI** is a full-stack AI-powered fraud detection platform that prevents crores in government welfare leakage by automatically identifying and stopping social security payments to deceased beneficiaries.
+
+India disburses **₹3.47 lakh crore** annually across schemes like PM-KISAN, NSAP, and MGNREGS. A conservative 1–2% leakage from deceased beneficiaries means **₹3,470–6,940 crore lost every year** — not from corruption, but from disconnected systems that don't talk to each other.
+
+DigiVerify AI solves this by integrating death registries, Aadhaar verification, and a trained ML anomaly detection model into a single real-time platform.
+
+> *"Even saving 1% of welfare fraud means crores of rupees that can feed millions of children."*
 
 ---
 
-## Request Lifecycle
+## 🏗️ System Architecture
 
-```
-  Officer                  FastAPI               ML Engine          Payment System
-     │                        │                      │                    │
-     │── POST /verify/bulk ──▶│                      │                    │
-     │                        │── Death Registry ──▶ │                    │
-     │                        │◀─ Match results ──── │                    │
-     │                        │── Aadhaar check ───▶ │                    │
-     │                        │◀─ Verification ────── │                    │
-     │                        │── Feature vector ───▶ │                    │
-     │                        │◀─ risk_score: 0.87 ── │                    │
-     │                        │                      │                    │
-     │                        │  [score ≥ 0.7]       │                    │
-     │                        │────── SUSPEND payment ─────────────────▶ │
-     │                        │◀───── Hold confirmed ────────────────────  │
-     │◀── HIGH_RISK flagged ──│                      │                    │
-     │                        │  [score 0.4–0.7]     │                    │
-     │◀── MEDIUM_RISK queued ─│                      │                    │
-     │                        │  [score < 0.4]       │                    │
-     │◀── VERIFIED ───────────│                      │                    │
-     │                        │                      │                    │
-     │  [Audit log entry created for every action]   │                    │
+```mermaid
+flowchart TD
+    subgraph Data_Sources["📦 Data Sources"]
+        DR[Death Registry - CRS]
+        UID[UIDAI Aadhaar API]
+        BANK[Bank Records - NPCI]
+        WDB[Welfare Beneficiary DB]
+    end
+
+    subgraph Ingestion["⚙️ Ingestion Layer"]
+        ETL[ETL Pipeline - Pandas + SQLite]
+        CACHE[Redis Hot Cache]
+    end
+
+    subgraph ML_Engine["🤖 ML Engine"]
+        FE[Feature Engineering - 9 Signals]
+        GBC[Gradient Boosting Classifier]
+        RS[Risk Scorer - 0.0 to 1.0]
+        AE[Alert Engine - Threshold 0.7]
+    end
+
+    subgraph Backend["⚡ FastAPI Backend - Port 5000"]
+        V1[/verify/beneficiary]
+        V2[/verify/bulk]
+        DC[/death-record/check]
+        AV[/aadhaar/verify]
+        LC[/life-certificate/submit]
+        DS[/dashboard/summary]
+    end
+
+    subgraph Frontends["🖥️ Dual Frontend"]
+        REACT[React Dashboard - Vite + Tailwind - 5173]
+        STREAM[Streamlit Analytics - 8501]
+    end
+
+    subgraph Actions["🚨 Automated Actions"]
+        STOP[Stop Payment]
+        FLAG[Flag Beneficiary]
+        AUDIT[Immutable Audit Log]
+        NOTIFY[Officer Notification]
+    end
+
+    Data_Sources --> ETL
+    ETL --> CACHE
+    CACHE --> FE
+    FE --> GBC
+    GBC --> RS
+    RS --> AE
+    AE --> Backend
+    Backend --> Frontends
+    Backend --> Actions
 ```
 
 ---
 
-## ML Model
+## 🔄 End-to-End Verification Flow
 
-**Algorithm:** Gradient Boosting Classifier · **Accuracy:** 94.5% · **AUC-ROC:** 0.967
-
-### Feature Pipeline
-
-```
-Raw Beneficiary Record
-        │
-        ▼
-┌───────────────────────────────────────────────────────────┐
-│                   FEATURE ENGINEERING                     │
-│                                                           │
-│  1. death_record_match         Binary    weight: 0.41     │
-│  2. aadhaar_not_verified       Binary    weight: 0.18     │
-│  3. location_mismatch_score    Float     weight: 0.14     │
-│  4. age_anomaly (>100)         Binary    weight: 0.09     │
-│  5. life_cert_overdue_days     Integer   weight: 0.07     │
-│  6. withdrawal_post_inactivity Binary    weight: 0.05     │
-│  7. txn_frequency_zscore       Float     weight: 0.03     │
-│  8. bank_acct_reuse            Integer   weight: 0.02     │
-│  9. district_mismatch          Binary    weight: 0.01     │
-└───────────────────────────┬───────────────────────────────┘
-                            │
-                            ▼
-            StandardScaler → GradientBoostingClassifier
-              n_estimators=200, learning_rate=0.05
-                   max_depth=4, subsample=0.8
-                            │
-                            ▼
-               risk_score (0.0 → 1.0)  +  action
-```
-
-### Confusion Matrix (Test Set, n=1000)
-
-```
-                     Predicted
-                  ALIVE    DECEASED
-  Actual  ALIVE │ 847 TN │  23 FP │   Precision : 81.0%
-         DECEASED│  32 FN │  98 TP │   Recall    : 75.4%
-                                       F1-Score   : 78.1%
-                                       Accuracy   : 94.5%
-                                       AUC-ROC    : 0.967
+```mermaid
+flowchart TD
+    A[Officer Triggers Bulk Verification] --> B[React Dashboard]
+    B --> C[Validate and Format Beneficiary IDs]
+    C --> D[POST /api/verify/bulk]
+    D --> E[FastAPI Backend]
+    E --> F[Cross-Reference Death Registry]
+    E --> G[Check Aadhaar Liveness Status]
+    E --> H[Fetch 6-Month Transaction History]
+    F --> I[Build 9-Signal Feature Vector]
+    G --> I
+    H --> I
+    I --> J[Run GBC Model Inference]
+    J --> K{Risk Score}
+    K -->|score >= 0.7| L[🔴 HIGH RISK - Stop Payment]
+    K -->|score 0.4 to 0.7| M[🟡 MEDIUM RISK - Manual Review]
+    K -->|score < 0.4| N[✅ VERIFIED - Continue Payment]
+    L --> O[Write Audit Log Entry]
+    M --> O
+    N --> O
+    O --> P[Update Dashboard in Real Time]
 ```
 
 ---
 
-## Database Schema
+## ☁️ Cloud Deployment Architecture
 
-```
-┌────────────────────────┐         ┌──────────────────────┐
-│     BENEFICIARIES      │         │       SCHEMES        │
-├────────────────────────┤         ├──────────────────────┤
-│ beneficiary_id    PK   │──────── │ scheme_id        PK  │
-│ full_name              │  FK     │ scheme_name          │
-│ aadhaar_number         │         │ ministry             │
-│ date_of_birth          │         │ monthly_amount       │
-│ district, state        │         │ eligibility_criteria │
-│ bank_account           │         └──────────────────────┘
-│ scheme_id         FK   │
-│ risk_score             │
-│ status                 │         ┌──────────────────────┐
-│ last_verified          │         │    DEATH_RECORDS     │
-└────────────┬───────────┘         ├──────────────────────┤
-             │                     │ record_id        PK  │
-    ┌────────┼─────────┐           │ full_name            │
-    │        │         │     ──── │ date_of_death        │
-    ▼        ▼         ▼    match  │ district             │
-┌────────┐ ┌───────┐ ┌────────┐   │ registration_no      │
-│TRANSAC-│ │ LIFE  │ │ AUDIT  │   │ source               │
-│TIONS   │ │ CERTS │ │  LOG   │   └──────────────────────┘
-├────────┤ ├───────┤ ├────────┤
-│txn_id  │ │cert_id│ │log_id  │
-│amount  │ │method │ │action  │
-│channel │ │expiry │ │risk_at │
-│flagged │ │valid  │ │ts      │
-└────────┘ └───────┘ └────────┘
-```
+```mermaid
+flowchart LR
+    Officer --> CDN
+    CDN --> Frontend
 
----
+    Frontend --> APIGateway
+    APIGateway --> Backend
+    Backend --> MLEngine
+    Backend --> Database
+    Backend --> Cache
+    MLEngine --> Backend
+    Backend --> APIGateway
+    APIGateway --> Frontend
+    Frontend --> Officer
 
-## API Reference
+    subgraph Frontend_Layer["Frontend Layer"]
+        Frontend[React + Tailwind Dashboard]
+    end
 
-**Base URL:** `http://localhost:5000/api` · **Docs:** `http://localhost:5000/docs`
+    subgraph Backend_Layer["Backend Layer"]
+        Backend[FastAPI Server]
+        MLEngine[GBC Inference Engine]
+        Database[(SQLite / PostgreSQL)]
+        Cache[(Redis Cache)]
+    end
 
-| Endpoint | Method | Description |
-|---|---|---|
-| `/health` | GET | System health check |
-| `/verify/beneficiary` | POST | Verify single beneficiary against all sources |
-| `/verify/bulk` | POST | Bulk verify up to 10,000 records (async) |
-| `/death-record/check` | POST | Cross-reference Civil Registration System |
-| `/aadhaar/verify` | POST | Trigger OTP/biometric liveness check |
-| `/life-certificate/submit` | POST | Accept and validate life certificate |
-| `/dashboard/summary` | GET | Aggregate stats for the monitoring view |
-| `/dashboard/flagged-cases` | GET | Paginated high-risk case list |
-| `/reports/fraud-prevention` | GET | Impact report with projections |
-| `/simulate/stop-payments` | POST | Demo: simulate payment hold workflow |
-
-### Sample: Verify Beneficiary
-
-```bash
-curl -X POST http://localhost:5000/api/verify/beneficiary \
-  -H "Content-Type: application/json" \
-  -d '{"beneficiary_id": "BEN-2024-10234", "scheme_id": "PM-KISAN"}'
-```
-
-```json
-{
-  "beneficiary_id": "BEN-2024-10234",
-  "status": "HIGH_RISK",
-  "risk_score": 0.87,
-  "flags": {
-    "death_record_match": true,
-    "aadhaar_not_verified": true,
-    "location_mismatch": false
-  },
-  "recommended_action": "STOP_PAYMENT",
-  "confidence": 0.94
-}
-```
-
-### Sample: Dashboard Summary
-
-```json
-{
-  "total_beneficiaries": 5000,
-  "deceased_detected": 748,
-  "high_risk_pending": 320,
-  "monthly_fraud_prevented_cr": 2.3,
-  "annual_projection_cr": 28,
-  "model_accuracy": 0.945
-}
+    subgraph Cloud_Layer["Cloud Layer"]
+        CDN[Content Delivery Network]
+        APIGateway[API Gateway + Auth]
+    end
 ```
 
 ---
 
-## Project Structure
+## 🔁 Request Lifecycle
+
+```mermaid
+sequenceDiagram
+    participant O as Officer
+    participant F as React Frontend
+    participant A as FastAPI Backend
+    participant M as ML Engine
+    participant D as Death Registry
+    participant P as Payment System
+
+    O->>F: Trigger bulk verification
+    F->>A: POST /api/verify/bulk
+    A->>D: Cross-reference name + DOB + district
+    D-->>A: Match results
+    A->>M: Forward 9-signal feature vector
+    M-->>A: risk_score: 0.87, confidence: 0.94
+
+    alt risk_score >= 0.7
+        A->>P: SUSPEND payments for beneficiary
+        P-->>A: Hold confirmed
+        A-->>F: Flag as HIGH_RISK 🔴
+    else risk_score 0.4 to 0.7
+        A-->>F: Flag as MEDIUM_RISK 🟡
+    else risk_score < 0.4
+        A-->>F: Mark VERIFIED ✅
+    end
+
+    F-->>O: Dashboard updated with full audit trail
+```
+
+---
+
+## 🤖 Machine Learning Model
+
+DigiVerify AI uses a **Gradient Boosting Classifier** trained on 5,000 synthetic beneficiary records with realistic fraud injection patterns.
+
+### ML Feature Pipeline
+
+```mermaid
+flowchart LR
+    subgraph Input["Raw Input"]
+        A[Beneficiary Record]
+        B[Transaction History]
+        C[Death Registry Match]
+        D[Aadhaar Status]
+    end
+
+    subgraph Features["9-Signal Feature Vector"]
+        F1[death_record_match · 0.41]
+        F2[aadhaar_not_verified · 0.18]
+        F3[location_mismatch_score · 0.14]
+        F4[age_anomaly · 0.09]
+        F5[life_cert_overdue_days · 0.07]
+        F6[withdrawal_post_inactivity · 0.05]
+        F7[txn_frequency_zscore · 0.03]
+        F8[bank_acct_reuse · 0.02]
+        F9[district_mismatch · 0.01]
+    end
+
+    subgraph Model["GBC Model"]
+        SC[StandardScaler]
+        GBC[GradientBoostingClassifier]
+        OUT[risk_score + action]
+    end
+
+    Input --> Features
+    Features --> SC
+    SC --> GBC
+    GBC --> OUT
+```
+
+### Model Performance
+
+| Metric | Value |
+|--------|-------|
+| Accuracy | **94.5%** |
+| AUC-ROC | **0.967** |
+| Precision | 81.0% |
+| Recall | 75.4% |
+| F1-Score | 78.1% |
+| False Positive Rate | 2.3% |
+
+---
+
+## 📂 Project Structure
 
 ```
 digiverify-ai/
 │
 ├── AIModels/
-│   └── Anomaly_Detection_Models/model1/
-│       ├── train.ipynb                   ← EDA, training, evaluation
-│       └── beneficiary_dataset_5000.csv  ← Synthetic training corpus
+│   └── Anomaly_Detection_Models/
+│       └── model1/
+│           ├── train.ipynb                    ← EDA, training, evaluation
+│           └── beneficiary_dataset_5000.csv   ← Synthetic training corpus
 │
 ├── backend/
-│   └── app.py                            ← FastAPI routes + handlers
+│   └── app.py                                 ← FastAPI routes + handlers
 │
-├── ReactFrontend/fund_tracker/
-│   └── src/
-│       ├── components/                   ← Dashboard, FlaggedCases, Reports
-│       └── api/                          ← Axios client wrappers
+├── ReactFrontend/
+│   └── fund_tracker/
+│       └── src/
+│           ├── components/                    ← Dashboard, FlaggedCases, Reports
+│           └── api/                           ← Axios client wrappers
 │
 ├── frontend/
-│   └── dashboard.py                      ← Streamlit analytics view
+│   └── dashboard.py                           ← Streamlit analytics view
 │
 ├── ml_models/
-│   ├── deceased_beneficiary_detector.py  ← GBC class + feature engineering
-│   └── fraud_detector.joblib             ← Serialized trained model
+│   ├── deceased_beneficiary_detector.py       ← GBC model + feature engineering
+│   └── fraud_detector.joblib                  ← Serialized trained model
 │
 ├── data/
-│   ├── generate_demo_data.py             ← Faker-based synthetic generator
+│   ├── generate_demo_data.py                  ← Faker-based data generator
 │   ├── beneficiaries.csv
 │   ├── death_records.csv
 │   ├── transactions.csv
 │   └── life_certificates.csv
 │
-├── generate_risk_scores.py               ← Batch scoring utility
-├── quick_start.py                        ← One-command setup
+├── generate_risk_scores.py
+├── quick_start.py
 └── requirements.txt
 ```
 
 ---
 
-## Quick Start
+## 🔧 API Endpoints
 
-**Prerequisites:** Python 3.9+ · Node.js 18+
+### Core Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/health` | GET | System health check |
+| `/api/verify/beneficiary` | POST | Verify single beneficiary |
+| `/api/verify/bulk` | POST | Bulk verify up to 10,000 records |
+| `/api/death-record/check` | POST | Cross-reference death registry |
+| `/api/aadhaar/verify` | POST | Trigger OTP / biometric liveness check |
+| `/api/life-certificate/submit` | POST | Submit and validate life certificate |
+
+### Dashboard Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/dashboard/summary` | GET | Aggregate monitoring stats |
+| `/api/dashboard/flagged-cases` | GET | Paginated high-risk case list |
+| `/api/reports/fraud-prevention` | GET | Impact report with projections |
+| `/api/simulate/stop-payments` | POST | Demo: simulate payment hold |
+
+---
+
+## ⚙️ Installation & Setup
 
 ```bash
-# 1. Clone and install
+# Clone the repository
 git clone https://github.com/shanky-ux/digiverify-ai.git
 cd digiverify-ai
-python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate        # Linux / Mac
+.venv\Scripts\activate           # Windows
+
+# Install Python dependencies
 pip install -r requirements.txt
 
-# 2. Generate demo data
+# Generate synthetic demo data
 python data/generate_demo_data.py
+```
 
-# 3. Start the backend (Terminal 1)
-cd backend && python app.py
-# → API at http://localhost:5000
-# → Swagger UI at http://localhost:5000/docs
+### Run the Backend
 
-# 4. Start the React dashboard (Terminal 2)
-cd ReactFrontend/fund_tracker && npm install && npm run dev
-# → Dashboard at http://localhost:5173
+```bash
+cd backend
+python app.py
+# API running at   http://localhost:5000
+# Swagger UI at    http://localhost:5000/docs
+```
 
-# 5. Optional: Streamlit analytics (Terminal 3)
+### Run the React Dashboard
+
+```bash
+cd ReactFrontend/fund_tracker
+npm install
+npm run dev
+# Dashboard at http://localhost:5173
+```
+
+### Run Streamlit Analytics (Optional)
+
+```bash
 streamlit run frontend/dashboard.py
-# → Analytics at http://localhost:8501
+# Analytics at http://localhost:8501
+```
 
-# OR: one command to start everything
+### One-Command Start
+
+```bash
 python quick_start.py
 ```
 
 ---
 
-## Impact
+## 🌐 Environment Variables
 
-| Metric | Value |
-|---|---|
-| Beneficiaries analyzed | 5,000 |
-| Deceased detected | ~748 (14.96%) |
-| High-risk cases | ~320 |
-| Monthly fraud prevented | ₹2.3+ Crores |
-| Annual projection | ₹28+ Crores |
-| Processing speed | <200ms per beneficiary |
-| Bulk throughput | 10,000 records / 45 seconds |
-| Model accuracy | 94.5% |
-| AUC-ROC | 0.967 |
+Create a `.env` file in the root directory:
+
+```
+VITE_API_BASE_URL=http://localhost:5000
+```
+
+Access inside React:
+
+```js
+const baseURL = import.meta.env.VITE_API_BASE_URL;
+```
 
 ---
 
-## Tech Stack
+## 📈 Impact Metrics
+
+| Metric | Value |
+|--------|-------|
+| Beneficiaries Analyzed | 5,000 |
+| Deceased Detected | ~748 (14.96%) |
+| High-Risk Cases | ~320 |
+| Monthly Fraud Prevented | ₹2.3+ Crores |
+| Annual Projection | ₹28+ Crores |
+| Processing Speed | <200ms per beneficiary |
+| Bulk Throughput | 10,000 records / 45 seconds |
+
+---
+
+## ✨ Key Features
+
+- AI-powered deceased beneficiary detection with 94.5% accuracy
+- Real-time cross-referencing with Civil Registration System death records
+- Aadhaar OTP / biometric liveness verification
+- Automated payment suspension for high-risk cases
+- Dual frontend — React dashboard for officers, Streamlit for analytics
+- Immutable audit trail for every verification and action
+- Bulk processing — 10,000 records in under a minute
+- Modular, backend-ready ML API architecture
+
+---
+
+## 🚀 Future Enhancements
+
+- Real National Death Registry and UIDAI API integration
+- PostgreSQL migration for production scale
+- Async bulk processing with Celery and Redis
+- LSTM-based time-series anomaly detection
+- Fraud ring detection via network graph analysis
+- React Native mobile app for field officers
+- Blockchain-backed immutable audit trail
+- Smart contract for auto-payment suspension
+
+---
+
+## 🔐 Security Notes
+
+- No real PII stored — all demo data is Faker-generated and fully synthetic
+- Aadhaar integration is mocked; production uses the official UIDAI sandbox API
+- Death registry uses simulated CRS data; production integrates with eNagar Seva
+- Every action — verification, flag, or payment hold — is logged to an immutable audit record
+
+---
+
+## 🛠️ Tech Stack
 
 | Layer | Technology |
-|---|---|
+|-------|-----------|
 | ML | Scikit-learn — Gradient Boosting Classifier |
 | Backend | FastAPI + Uvicorn |
 | Data Processing | Pandas, NumPy |
@@ -336,27 +431,20 @@ python quick_start.py
 
 ---
 
-## Security Notes
+## 👨‍💻 Author
 
-- No real PII stored — all demo data is Faker-generated synthetic records
-- Aadhaar integration is mocked; production uses the UIDAI sandbox API
-- Death registry uses simulated CRS data; production integrates with eNagar Seva
-- Every verification and payment action writes to an immutable audit log
+**Ravi Shankar**  
+B.Tech Computer Science (AIML)  
+Full Stack Developer | AI Enthusiast  
 
----
-
-## Roadmap
-
-- [ ] PostgreSQL migration for production scale
-- [ ] Async bulk processing with Celery + Redis
-- [ ] Live UIDAI and National Death Registry API integration
-- [ ] LSTM time-series anomaly detection
-- [ ] Fraud ring detection via network graph analysis
-- [ ] React Native mobile app for field officers
-- [ ] Blockchain-backed immutable audit trail
+GitHub: https://github.com/shanky-ux
 
 ---
 
-## License
+## 📜 License
 
-MIT — Built for educational and hackathon purposes.
+This project is licensed under the MIT License — built for educational and hackathon purposes.
+
+<p align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:24243e,50:302b63,100:0f0c29&height=120&section=footer"/>
+</p>
