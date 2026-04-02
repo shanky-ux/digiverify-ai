@@ -53,12 +53,12 @@ flowchart TD
     end
 
     subgraph Backend["⚡ FastAPI Backend - Port 5000"]
-        V1[/verify/beneficiary]
-        V2[/verify/bulk]
-        DC[/death-record/check]
-        AV[/aadhaar/verify]
-        LC[/life-certificate/submit]
-        DS[/dashboard/summary]
+        V1["/verify/beneficiary"]
+        V2["/verify/bulk"]
+        DC["/death-record/check"]
+        AV["/aadhaar/verify"]
+        LC["/life-certificate/submit"]
+        DS["/dashboard/summary"]
     end
 
     subgraph Frontends["🖥️ Dual Frontend"]
@@ -92,7 +92,7 @@ flowchart TD
 flowchart TD
     A[Officer Triggers Bulk Verification] --> B[React Dashboard]
     B --> C[Validate and Format Beneficiary IDs]
-    C --> D[POST /api/verify/bulk]
+    C --> D["POST /api/verify/bulk"]
     D --> E[FastAPI Backend]
     E --> F[Cross-Reference Death Registry]
     E --> G[Check Aadhaar Liveness Status]
@@ -198,15 +198,15 @@ flowchart LR
     end
 
     subgraph Features["9-Signal Feature Vector"]
-        F1[death_record_match · 0.41]
-        F2[aadhaar_not_verified · 0.18]
-        F3[location_mismatch_score · 0.14]
-        F4[age_anomaly · 0.09]
-        F5[life_cert_overdue_days · 0.07]
-        F6[withdrawal_post_inactivity · 0.05]
-        F7[txn_frequency_zscore · 0.03]
-        F8[bank_acct_reuse · 0.02]
-        F9[district_mismatch · 0.01]
+        F1["death_record_match · 0.41"]
+        F2["aadhaar_not_verified · 0.18"]
+        F3["location_mismatch_score · 0.14"]
+        F4["age_anomaly · 0.09"]
+        F5["life_cert_overdue_days · 0.07"]
+        F6["withdrawal_post_inactivity · 0.05"]
+        F7["txn_frequency_zscore · 0.03"]
+        F8["bank_acct_reuse · 0.02"]
+        F9["district_mismatch · 0.01"]
     end
 
     subgraph Model["GBC Model"]
