@@ -433,9 +433,9 @@ const baseURL = import.meta.env.VITE_API_BASE_URL;
 
 ## 👨‍💻 Author
 
-**Ravi Shankar**  
-B.Tech Computer Science (AIML)  
-Full Stack Developer | AI Enthusiast  
+**Ravi Shankar**
+B.Tech Computer Science (AIML)
+Full Stack Developer | AI Enthusiast
 
 GitHub: https://github.com/shanky-ux
 
