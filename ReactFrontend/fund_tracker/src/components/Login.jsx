@@ -159,7 +159,7 @@ export default function Login({ onLogin }) {
                   boxShadow: '0 4px 20px rgba(59,130,246,0.4)',
                 }} />
               <div style={{ textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12, color: 'rgba(147,197,253,0.7)', fontSize: 12 }}>
-                Test: Aadhaar <span style={{ color: '#93c5fd', fontWeight: 700 }}>123456789012</span> / Email <span style={{ color: '#93c5fd', fontWeight: 700 }}>test.user@gmail.com</span>
+                Test: Aadhaar <span style={{ color: '#93c5fd', fontWeight: 700 }}>123456789012</span> / Email <span style={{ color: '#93c5fd', fontWeight: 700 }}>ravi@mail.com</span>
               </div>
             </div>
           ) : (
