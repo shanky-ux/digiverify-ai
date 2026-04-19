@@ -62,7 +62,7 @@ Current systems lack:
 | Role | Aadhaar | Email |
 |---|---|---|
 | 👤 Citizen | `123456789012` | `ravi@mail.com` |
-| 🔐 Admin | `000000000000` | `admin@digiverify.com` |
+| 🔐 Admin | `admin` | `admin123` |
 
 ---
 
