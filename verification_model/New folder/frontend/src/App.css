@@ -1,0 +1,24 @@
+.app {
+  min-height: 100vh;
+}
+
+.Toastify__toast {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.Toastify__toast--success {
+  background: #4caf50;
+}
+
+.Toastify__toast--error {
+  background: #f44336;
+}
+
+.Toastify__toast--info {
+  background: #2196f3;
+}
+
+.Toastify__toast-icon {
+  width: 20px;
+}

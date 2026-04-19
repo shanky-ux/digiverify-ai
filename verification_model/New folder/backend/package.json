@@ -1,0 +1,25 @@
+{
+  "name": "beneficiary-verification-backend",
+  "version": "1.0.0",
+  "description": "Backend API for Aadhaar-based beneficiary verification with facial recognition",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": ["aadhaar", "verification", "facial-recognition"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mysql2": "^3.6.0",
+    "dotenv": "^16.3.1",
+    "multer": "^1.4.5-lts.1",
+    "cors": "^2.8.5",
+    "uuid": "^9.0.0",
+    "jimp": "^0.22.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
