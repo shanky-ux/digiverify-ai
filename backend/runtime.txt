@@ -1,1 +1,2 @@
 3.11.9
+# Trigger redeploy - init-db endpoint with demo user seeding
