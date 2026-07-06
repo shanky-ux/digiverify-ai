@@ -37,7 +37,7 @@ India spends thousands of crores on welfare programs every year. Even a 1% leak 
 
 ---
 
-## 🏗️ System Architecture
+## 🏗️ System Architectures
 
 ```mermaid
 flowchart TD
