@@ -84,7 +84,7 @@ flowchart TD
 
 ---
 
-## ☁️ Cloud Execution Flow
+## ☁️ Cloud Execution Flows
 
 ```mermaid
 flowchart LR
