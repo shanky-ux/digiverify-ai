@@ -171,7 +171,7 @@ Ongoing improvements include:
 
 DigiVerify AI uses an **Isolation Forest** anomaly detection model for real-time fraud scoring.
 
-### ML Workflow
+### ML Workflows
 
 1. Citizen submits identity documents
 2. Backend extracts features from user profile
